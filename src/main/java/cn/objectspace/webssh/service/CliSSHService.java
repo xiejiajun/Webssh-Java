@@ -187,14 +187,14 @@ public class CliSSHService{
         byte[] buffer = new byte[4096];
         int bytesRead;
         // 没有输入的时候in.available()为0 ，就不会走到in.read阻塞逻辑
-        if (in.available() > 0 && isAlive) {
-            bytesRead = in.read(buffer);
-            if (bytesRead < 0) {
-                return;
-            }
-            out.write(buffer, 0, bytesRead);
-            out.flush();
+        if (in.available() == 0 || !isAlive) {
+            return;
         }
+        bytesRead = in.read(buffer);
+        if (bytesRead < 0) {
+            return;
+        }
+        out.write(buffer, 0, bytesRead);
         out.flush();
     }
 

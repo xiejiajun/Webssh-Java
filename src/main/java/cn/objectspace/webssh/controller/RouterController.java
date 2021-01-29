@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class RouterController {
-    @RequestMapping("/websshpage")
+    @RequestMapping("/")
     public String websshpage(){
         return "webssh";
     }

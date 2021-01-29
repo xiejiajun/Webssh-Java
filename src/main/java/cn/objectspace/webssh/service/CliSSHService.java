@@ -186,11 +186,11 @@ public class CliSSHService{
     private void copy(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[4096];
         int bytesRead;
-        // 没有输入的时候in.available()为0 ，就会退出这一层循环，从而不会走到in.read阻塞逻辑
-        while (in.available() > 0 && isAlive) {
+        // 没有输入的时候in.available()为0 ，就不会走到in.read阻塞逻辑
+        if (in.available() > 0 && isAlive) {
             bytesRead = in.read(buffer);
             if (bytesRead < 0) {
-                break;
+                return;
             }
             out.write(buffer, 0, bytesRead);
             out.flush();

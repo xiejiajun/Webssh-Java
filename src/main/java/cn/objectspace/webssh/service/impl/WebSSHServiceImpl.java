@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 * @Author: NoCortY
 * @Date: 2020/3/8
 */
-@Service
+@Service("sshService")
 public class WebSSHServiceImpl implements WebSSHService {
     //存放ssh连接信息的map
     private static Map<String, Object> sshMap = new ConcurrentHashMap<>();

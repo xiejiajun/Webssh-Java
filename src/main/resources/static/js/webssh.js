@@ -95,7 +95,7 @@ var heartCheck = {
 //重新连接
 var lockReconnect = false;//重连锁，避免重复连接
 var reconnectTimes = 0;
-var maxReconnectTimes = 6;
+var maxReconnectTimes = 1;
 var resetReconnectTimeout;
 function reconnect(options) {
     if (lockReconnect)

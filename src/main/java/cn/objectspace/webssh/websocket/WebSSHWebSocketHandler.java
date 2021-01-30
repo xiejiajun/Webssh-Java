@@ -5,6 +5,7 @@ import cn.objectspace.webssh.service.WebSSHService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 
@@ -16,7 +17,12 @@ import org.springframework.web.socket.*;
 */
 @Component
 public class WebSSHWebSocketHandler implements WebSocketHandler{
+//    @Autowired
+//    @Qualifier("sshService")
+//    private WebSSHService webSSHService;
+
     @Autowired
+    @Qualifier("kubectlService")
     private WebSSHService webSSHService;
     private Logger logger = LoggerFactory.getLogger(WebSSHWebSocketHandler.class);
 

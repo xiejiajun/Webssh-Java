@@ -22,6 +22,10 @@ public class ConstantPool {
      * 发送指令：心跳
      */
     public static final String WEBSSH_OPERATE_HEARTBEAT = "heartbeat";
+    /**
+     * 发送指令: 设置窗口大小
+     */
+    public static final String WEBSSH_OPERATE_RESIZE_WINDOW = "resize_window";
 
 
     public static final String DEFAULT_K8S_CLUSTER_ACCESS_TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6InplbENnUUladzlzQnY3UHZwLWRieT" +

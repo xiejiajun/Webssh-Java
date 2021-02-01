@@ -103,7 +103,7 @@ public class KubectlSSHServiceImpl implements WebSSHService {
                     if (execWatcher == null) {
                         break;
                     }
-                    execWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
+                    // execWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
                     this.sendCommand(execWatcher, command, session);
                 } catch (Exception e) {
                     logger.error("命令执行失败", e);
@@ -120,6 +120,17 @@ public class KubectlSSHServiceImpl implements WebSSHService {
                 if (this.heartBeat(connectInfo.getK8sExecutorWatcher())) {
                     sendMessage(session, "Heartbeat healthy");
                 }
+                break;
+            case WEBSSH_OPERATE_RESIZE_WINDOW:
+                connectInfo = connectInfoMap.get(socketId);
+                if (connectInfo == null) {
+                    break;
+                }
+                ExecWatch execWatcher = connectInfo.getK8sExecutorWatcher();
+                if (execWatcher == null) {
+                    break;
+                }
+                execWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
                 break;
             default:
                 logger.error("不支持的操作");

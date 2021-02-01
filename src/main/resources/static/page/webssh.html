@@ -53,7 +53,7 @@
         var r = parseInt($("#outerDiv").height() / 17);
         term.resize(c, r);
         client.send({
-            "operate": "command"
+            "operate": "resize_window"
             , "command": ''
             , "cols": c
             , "rows": r

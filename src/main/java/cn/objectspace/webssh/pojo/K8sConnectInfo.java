@@ -18,4 +18,10 @@ public class K8sConnectInfo {
     private KubernetesClient k8sClient;
 
     private ExecWatch k8sExecutorWatcher;
+
+    public void close() {
+        if (k8sExecutorWatcher != null) {
+            k8sExecutorWatcher.close();
+        }
+    }
 }

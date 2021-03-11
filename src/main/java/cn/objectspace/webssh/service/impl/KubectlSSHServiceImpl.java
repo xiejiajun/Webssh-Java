@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,13 +51,16 @@ public class KubectlSSHServiceImpl implements WebSSHService {
 
     private ExecutorService executorService;
 
-
-    @Override
-    public void initConnection(WebSocketSession session) {
+    @PostConstruct
+    public void initialize() {
         connectInfoMap = Maps.newConcurrentMap();
         k8sClusterClientMap = Maps.newConcurrentMap();
         executorService = Executors.newCachedThreadPool();
+    }
 
+
+    @Override
+    public void initConnection(WebSocketSession session) {
         K8sConnectInfo connectInfo = K8sConnectInfo.builder()
                 .webSocketSession(session)
                 .build();
@@ -96,6 +100,7 @@ public class KubectlSSHServiceImpl implements WebSSHService {
                 String command = commandInfo.getCommand();
                 connectInfo = connectInfoMap.get(socketId);
                 if (connectInfo == null) {
+                    logger.info("未发现socketId为:{}的连接", socketId);
                     break;
                 }
                 try {
@@ -209,6 +214,9 @@ public class KubectlSSHServiceImpl implements WebSSHService {
     public void close(WebSocketSession session) {
         String socketId = String.valueOf(session.getAttributes().get(ConstantPool.USER_UUID_KEY));
         K8sConnectInfo connectInfo = connectInfoMap.get(socketId);
+        if (connectInfo != null) {
+            connectInfo.close();
+        }
         this.connectInfoMap.remove(socketId);
         IOUtil.closeQuietly(session);
     }

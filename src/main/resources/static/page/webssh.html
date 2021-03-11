@@ -44,7 +44,9 @@
         host: '192.168.142.229',//IP
         port: '2222',//端口号
         username: 'root',//用户名
-        password: 'root'//密码
+        password: 'root',//密码
+        namespace: 'default',
+        podName: 'sample-ct5bm',
     });
 
     //terminal 大小改变
@@ -90,7 +92,7 @@
                         $("#dragDiv").css("top", mousePointY + 5);
                     }
                 }
-                resizeTerminal();
+                // resizeTerminal();
             });
         },
         mouseLeave: function () {
@@ -102,7 +104,7 @@
         mouseUp: function () {
             $(document).on("mouseup", function () {
                 resizeFlag = false;
-                resizeTerminal();
+                // resizeTerminal();
             });
         }
     };

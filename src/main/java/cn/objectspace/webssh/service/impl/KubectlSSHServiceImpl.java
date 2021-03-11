@@ -164,14 +164,15 @@ public class KubectlSSHServiceImpl implements WebSSHService {
             }
 
             k8sExecutorWatcher = newExecWatch(k8sClient, namespace, podName, container, session);
+            final ExecWatch closeableWatcher = k8sExecutorWatcher;
             connectInfo.setK8sExecutorWatcher(k8sExecutorWatcher);
-            BlockingInputStreamPumper out = new BlockingInputStreamPumper(k8sExecutorWatcher.getOutput(), new TerminalOutputCallback(session));
+            BlockingInputStreamPumper out = new BlockingInputStreamPumper(k8sExecutorWatcher.getOutput(), new TerminalOutputCallback(session), closeableWatcher::close);
             executorService.submit(out);
             BlockingInputStreamPumper err = new BlockingInputStreamPumper(k8sExecutorWatcher.getError(), new TerminalOutputCallback(session));
             executorService.submit(err);
             BlockingInputStreamPumper errChannel = new BlockingInputStreamPumper(k8sExecutorWatcher.getErrorChannel(), new TerminalOutputCallback(session));
             executorService.submit(errChannel);
-            this.sendCommand(k8sExecutorWatcher, "\r", session);
+//            this.sendCommand(k8sExecutorWatcher, "", session);
             // TODO 是否需要再加一个检查连接的逻辑，移除失败的连接
         } catch (Exception e) {
             logger.error("建立连接失败", e);
@@ -321,7 +322,7 @@ public class KubectlSSHServiceImpl implements WebSSHService {
         @Override
         public void onOpen(Response response) {
             logger.info("{}: The shell will remain open for 10 seconds.", this.socketId);
-            KubectlSSHServiceImpl.this.sendMessage(this.session, "The shell will remain open for 10 seconds.\n");
+//            KubectlSSHServiceImpl.this.sendMessage(this.session, "The shell will remain open for 10 seconds.\n");
         }
 
         @Override
@@ -365,7 +366,8 @@ public class KubectlSSHServiceImpl implements WebSSHService {
                 K8sConnectInfo connectInfo = iterator.next().getValue();
                 if (connectInfo != null) {
                     if (connectInfo.getK8sExecutorWatcher() != null) {
-                        sendCommand(connectInfo.getK8sExecutorWatcher(), "exit\n", null);
+                        connectInfo.getK8sExecutorWatcher().close();
+//                        sendCommand(connectInfo.getK8sExecutorWatcher(), "exit\n", null);
                     }
                 }
                 IOUtil.closeQuietly(connectInfo.getWebSocketSession());

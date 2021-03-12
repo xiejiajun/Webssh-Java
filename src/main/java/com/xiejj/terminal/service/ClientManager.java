@@ -25,6 +25,7 @@ public class ClientManager {
 
     /**
      * TODO 最好改为LRU Cache实现，防止创建太多客户端
+     *  Caffeine / Guava
      * K8S客户端缓存
      */
     private final Map<String, KubernetesClient> clientMap = Maps.newConcurrentMap();

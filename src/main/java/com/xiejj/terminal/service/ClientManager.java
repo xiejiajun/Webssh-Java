@@ -148,7 +148,6 @@ public class ClientManager {
         clientMap.remove(oldVersionKey);
     }
 
-    @PreDestroy
     public void close() {
         if (MapUtils.isEmpty(this.clientMap)) {
             return;

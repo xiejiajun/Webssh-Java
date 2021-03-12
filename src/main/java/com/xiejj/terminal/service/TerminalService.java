@@ -64,7 +64,7 @@ public class TerminalService {
         SessionHandle sessionHandle = SessionHandle.builder()
                 .webSocketSession(session)
                 .build();
-        String socketSessionId = String.valueOf(session.getAttributes().get(ConstantPool.WS_SESSION_ID));
+        String socketSessionId = session.getId();
         sessionHandle.setSessionId(socketSessionId);
         sessionHandleMap.put(socketSessionId, sessionHandle);
     }
@@ -152,7 +152,7 @@ public class TerminalService {
             return;
         }
         try {
-            String sessionId = String.valueOf(session.getAttributes().get(ConstantPool.WS_SESSION_ID));
+            String sessionId = session.getId();
             MessageOperate operateType = message.getOperate();
             SessionHandle sessionHandle = this.sessionHandleMap.get(sessionId);
             if (sessionHandle == null) {
@@ -203,10 +203,13 @@ public class TerminalService {
             final ExecWatch closeableWatcher = ttyWatcher;
             sessionHandle.setTtyWatcher(ttyWatcher);
             BlockingInputStreamPumper out = new BlockingInputStreamPumper(ttyWatcher.getOutput(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
+            sessionHandle.setOut(out);
             executorService.submit(out);
-            BlockingInputStreamPumper err = new BlockingInputStreamPumper(ttyWatcher.getError(), new TerminalOutputCallback(sessionHandle));
+            BlockingInputStreamPumper err = new BlockingInputStreamPumper(ttyWatcher.getError(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
+            sessionHandle.setErr(err);
             executorService.submit(err);
-            BlockingInputStreamPumper errChannel = new BlockingInputStreamPumper(ttyWatcher.getErrorChannel(), new TerminalOutputCallback(sessionHandle));
+            BlockingInputStreamPumper errChannel = new BlockingInputStreamPumper(ttyWatcher.getErrorChannel(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
+            sessionHandle.setErrChannel(errChannel);
             executorService.submit(errChannel);
         } catch (Exception e) {
             log.error("建立连接失败", e);
@@ -287,7 +290,7 @@ public class TerminalService {
      * @param session
      */
     public void close(WebSocketSession session) {
-        String sessionId = String.valueOf(session.getAttributes().get(ConstantPool.WS_SESSION_ID));
+        String sessionId = session.getId();
         SessionHandle sessionHandle = sessionHandleMap.get(sessionId);
         if (sessionHandle != null) {
             sessionHandle.close();
@@ -329,6 +332,33 @@ public class TerminalService {
                 .exec("/bin/bash");
     }
 
+
+    @PreDestroy
+    public void destroy() {
+        this.removeAllSessions();
+        this.clientManager.close();
+        this.executorService.shutdownNow();
+    }
+
+    /**
+     * 清除所有Session
+     */
+    private void removeAllSessions() {
+        if (MapUtils.isEmpty(this.sessionHandleMap)) {
+            return;
+        }
+        Iterator<Map.Entry<String, SessionHandle>> iterator = this.sessionHandleMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            SessionHandle sessionHandle = iterator.next().getValue();
+            if (sessionHandle != null) {
+                sessionHandle.close();
+            }
+            iterator.remove();
+        }
+    }
+
+
+
     /**
      * 终端会话监听器
      */
@@ -361,37 +391,6 @@ public class TerminalService {
             close(sessionHandle);
         }
     }
-
-
-    @PreDestroy
-    public void destroy() {
-        this.removeAllSessions();
-        this.executorService.shutdownNow();
-    }
-
-    /**
-     * 清除所有Session
-     */
-    private void removeAllSessions() {
-        if (MapUtils.isEmpty(this.sessionHandleMap)) {
-            return;
-        }
-        Iterator<Map.Entry<String, SessionHandle>> iterator = this.sessionHandleMap.entrySet().iterator();
-        while (iterator.hasNext()) {
-            SessionHandle sessionHandle = iterator.next().getValue();
-            if (sessionHandle == null) {
-                continue;
-            }
-            if (sessionHandle.getTtyWatcher() != null) {
-                sessionHandle.getTtyWatcher().close();
-            }
-            if (sessionHandle.getWebSocketSession() != null) {
-                IOUtils.closeQuietly(sessionHandle.getWebSocketSession());
-            }
-            iterator.remove();
-        }
-    }
-
 
     /**
      * K8s容器命令返回值回调接口

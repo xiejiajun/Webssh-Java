@@ -2,8 +2,10 @@ package com.xiejj.terminal.service;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
+import io.fabric8.kubernetes.client.utils.BlockingInputStreamPumper;
 import lombok.Builder;
 import lombok.Data;
+import org.apache.commons.io.IOUtils;
 import org.springframework.web.socket.WebSocketSession;
 
 /**
@@ -22,9 +24,17 @@ public class SessionHandle {
 
     private ExecWatch ttyWatcher;
 
+    private BlockingInputStreamPumper out;
+    private BlockingInputStreamPumper err;
+    private BlockingInputStreamPumper errChannel;
+
     public void close() {
+        IOUtils.closeQuietly(out);
+        IOUtils.closeQuietly(err);
+        IOUtils.closeQuietly(errChannel);
         if (ttyWatcher != null) {
             ttyWatcher.close();
         }
+        IOUtils.closeQuietly(webSocketSession);
     }
 }

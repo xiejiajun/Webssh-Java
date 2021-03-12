@@ -130,7 +130,6 @@ public class TerminalService {
     private void handleResizeWindow(Message message, SessionHandle sessionHandle) {
         ExecWatch ttyWatcher = sessionHandle.getTtyWatcher();
         if (ttyWatcher == null) {
-            this.close(sessionHandle);
             return;
         }
         ttyWatcher.resize(message.getCols(), message.getRows());
@@ -154,7 +153,8 @@ public class TerminalService {
         try {
             String sessionId = session.getId();
             MessageOperate operateType = message.getOperate();
-            SessionHandle sessionHandle = this.sessionHandleMap.get(sessionId);
+
+           SessionHandle sessionHandle = this.sessionHandleMap.get(sessionId);
             if (sessionHandle == null) {
                 this.sendMessage(session, "invalid session");
                 this.close(session);
@@ -203,13 +203,10 @@ public class TerminalService {
             final ExecWatch closeableWatcher = ttyWatcher;
             sessionHandle.setTtyWatcher(ttyWatcher);
             BlockingInputStreamPumper out = new BlockingInputStreamPumper(ttyWatcher.getOutput(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
-            sessionHandle.setOut(out);
             executorService.submit(out);
             BlockingInputStreamPumper err = new BlockingInputStreamPumper(ttyWatcher.getError(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
-            sessionHandle.setErr(err);
             executorService.submit(err);
             BlockingInputStreamPumper errChannel = new BlockingInputStreamPumper(ttyWatcher.getErrorChannel(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
-            sessionHandle.setErrChannel(errChannel);
             executorService.submit(errChannel);
         } catch (Exception e) {
             log.error("建立连接失败", e);
@@ -387,7 +384,7 @@ public class TerminalService {
 
         @Override
         public void onClose(int code, String reason) {
-            log.info("The shell will now close");
+            log.info("{}: The shell will now close", this.sessionId);
             close(sessionHandle);
         }
     }

@@ -24,14 +24,7 @@ public class SessionHandle {
 
     private ExecWatch ttyWatcher;
 
-    private BlockingInputStreamPumper out;
-    private BlockingInputStreamPumper err;
-    private BlockingInputStreamPumper errChannel;
-
     public void close() {
-        IOUtils.closeQuietly(out);
-        IOUtils.closeQuietly(err);
-        IOUtils.closeQuietly(errChannel);
         if (ttyWatcher != null) {
             ttyWatcher.close();
         }

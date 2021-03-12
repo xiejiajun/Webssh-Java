@@ -3,9 +3,9 @@ package com.xiejj.terminal.service;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import org.apache.commons.io.IOUtils;
 
+import java.io.Closeable;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -14,39 +14,39 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author xiejiajun
  */
-public class ClientCache {
+public class ClientCache <KEY, CLIENT extends Closeable>{
 
-    private final Cache<String, Optional<KubernetesClient>> CLIENT_CACHE;
+    private final Cache<KEY, Optional<CLIENT>> CLIENT_CACHE;
 
     public ClientCache(int maxSize) {
         this.CLIENT_CACHE = CacheBuilder.newBuilder()
                 .maximumSize(maxSize)
-                .build(new CacheLoader<String, Optional<KubernetesClient>>() {
+                .build(new CacheLoader<KEY, Optional<CLIENT>>() {
                     @Override
-                    public Optional<KubernetesClient> load(String key) throws Exception {
+                    public Optional<CLIENT> load(KEY key) throws Exception {
                         return Optional.empty();
                     }
                 });
     }
 
-    public void put(String key, KubernetesClient client) {
+    public void put(KEY key, CLIENT client) {
         if (Objects.isNull(client)) {
             return;
         }
         this.CLIENT_CACHE.put(key, Optional.of(client));
     }
 
-    public void remove(String key) {
+    public void remove(KEY key) {
         this.CLIENT_CACHE.invalidate(key);
     }
 
-    public KubernetesClient get(String key) {
+    public CLIENT get(KEY key) {
        return this.get(key, Optional::empty);
     }
 
-    public KubernetesClient get(String key, Callable<? extends Optional<KubernetesClient>> cacheLoader) {
+    public CLIENT get(KEY key, Callable<? extends Optional<CLIENT>> cacheLoader) {
         try {
-            Optional<KubernetesClient> opt = CLIENT_CACHE.get(key, cacheLoader);
+            Optional<CLIENT> opt = CLIENT_CACHE.get(key, cacheLoader);
             return opt.orElse(null);
         } catch (ExecutionException e) {
             return null;

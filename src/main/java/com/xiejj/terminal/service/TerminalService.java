@@ -17,6 +17,7 @@ import okhttp3.Response;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -43,6 +44,7 @@ public class TerminalService {
     private ExecutorService executorService;
 
     @Autowired
+    @Qualifier("cacheClientManager")
     private ClientManager clientManager;
 
     @PostConstruct

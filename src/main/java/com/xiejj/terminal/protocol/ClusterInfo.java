@@ -1,6 +1,5 @@
 package com.xiejj.terminal.protocol;
 
-import cn.objectspace.webssh.pojo.K8sClusterInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import io.fabric8.kubernetes.api.model.ExecConfig;
@@ -73,11 +72,10 @@ public class ClusterInfo {
         }
 
         return clientConfig;
-
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static final class ExecCredential {
+    public static final class ExecCredential {
         public String kind;
         public String apiVersion;
         public ExecCredentialSpec spec;
@@ -85,11 +83,11 @@ public class ClusterInfo {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static final class ExecCredentialSpec {
+    public static final class ExecCredentialSpec {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static final class ExecCredentialStatus {
+    public static final class ExecCredentialStatus {
         public String token;
         // TODO clientCertificateData, clientKeyData, expirationTimestamp
     }

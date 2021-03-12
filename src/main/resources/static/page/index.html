@@ -33,29 +33,26 @@
 <div id="dragDiv"></div>
 <script src="../js/jquery-3.4.1.min.js"></script>
 <!--<script src="../js/xterm.js" charset="utf-8"></script>-->
-<script src="../js/webssh.js" charset="utf-8"></script>
+<script src="../js/terminal.js" charset="utf-8"></script>
 <script src="../xterm/lib/xterm.js"></script>
 <script>
-    var client;
-    var term;
+    let client;
+    let term;
 
     openTerminal({
-        operate: 'connect',
-        host: '192.168.142.229',//IP
-        port: '2222',//端口号
-        username: 'root',//用户名
-        password: 'root',//密码
+        operate: 'ESTABLISH_CONNECT',
+        k8sClusterName: 'my-k8s-cluster',
         namespace: 'default',
         podName: 'sample-ct5bm',
     });
 
     //terminal 大小改变
     function resizeTerminal() {
-        var c = parseInt($("#outerDiv").width() / 9) - 2;
-        var r = parseInt($("#outerDiv").height() / 17);
+        let c = parseInt($("#outerDiv").width() / 9) - 2;
+        let r = parseInt($("#outerDiv").height() / 17);
         term.resize(c, r);
         client.send({
-            "operate": "resize_window"
+            "operate": "RESIZE_WINDOW"
             , "command": ''
             , "cols": c
             , "rows": r
@@ -63,9 +60,9 @@
     };
 
     //限制最小宽度，避免排版错乱
-    var minWidth = $(window).width()*0.3;
+    let minWidth = $(window).width()*0.3;
     //调整大小
-    var resizeDiv = {
+    let resizeDiv = {
         init: function () {
             resizeFlag = false;
             this.mouseDown();
@@ -127,8 +124,8 @@
         term.writeln('Connecting...');
 
         term.onData(function (key) {
-            var order = {
-                "operate": "command",
+            let order = {
+                "operate": "COMMAND",
                 "command": key,
                 "cols": parseInt(term.cols),
                 "rows": parseInt(term.rows)
@@ -166,15 +163,15 @@
             }
         });
         function ordinal_suffix_of(i) {
-            var j = i % 10,
+            let j = i % 10,
                 k = i % 100;
-            if (j == 1 && k != 11) {
+            if (j === 1 && k !== 11) {
                 return i + "st";
             }
-            if (j == 2 && k != 12) {
+            if (j === 2 && k !== 12) {
                 return i + "nd";
             }
-            if (j == 3 && k != 13) {
+            if (j === 3 && k !== 13) {
                 return i + "rd";
             }
             return i + "th";

@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: cn.objectspace.WebSSHStarter
+Main-Class: com.xiejj.terminal.TerminalLauncher
 

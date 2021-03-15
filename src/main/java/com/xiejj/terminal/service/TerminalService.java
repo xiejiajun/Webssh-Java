@@ -314,14 +314,14 @@ public class TerminalService {
      * @return ExecWebSocketListener
      */
     private ExecWatch newExecWatch(KubernetesClient client, String namespace, String podName, String containerName, SessionHandle sessionHandle) {
-        OutputStream outputStream = new WebsocketOutputStream(sessionHandle);
+        OutputStream terminalOutput = new TerminalOutputStream(sessionHandle);
         // writingErrorChannel会输出exit命令之后是否退出成功的消息，这里不需要
         // ExecWebSocketListener.onMessage里面streamID为3才会往errChannel写数据
         // [bash 标准输入/输出/错误输出-0/1/2](https://www.jianshu.com/p/cb3c5ad8dcc5): Shell只有0/1/2，这里的3是K8s自定义的？
         return client.pods().inNamespace(namespace).withName(podName).inContainer(containerName)
                 .redirectingInput()
-                .writingOutput(outputStream)
-                .writingError(outputStream)
+                .writingOutput(terminalOutput)
+                .writingError(terminalOutput)
                 .withTTY()
                 .usingListener(new SimpleListener(sessionHandle))
                 .exec("/bin/bash");
@@ -357,10 +357,10 @@ public class TerminalService {
      *  .ExecWebSocketListener.onMessage接收到的响应消息，提高响应速度。
      *  （redirecting + 监听ExecWebSocketListener.getOutput / getError方式中间有一层转发和异步监听，效率比较低)
      */
-    private class WebsocketOutputStream extends OutputStream {
+    private class TerminalOutputStream extends OutputStream {
         private SessionHandle sessionHandle;
 
-        public WebsocketOutputStream(SessionHandle sessionHandle) {
+        public TerminalOutputStream(SessionHandle sessionHandle) {
             this.sessionHandle = sessionHandle;
         }
 

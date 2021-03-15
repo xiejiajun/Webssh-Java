@@ -357,9 +357,9 @@ public class TerminalService {
      *  （redirecting + 监听ExecWebSocketListener.getOutput / getError方式中间有一层转发和异步监听，效率比较低)
      */
     private class TerminalOutputStream extends OutputStream {
-        private SessionHandle sessionHandle;
+        private final SessionHandle sessionHandle;
 
-        public TerminalOutputStream(SessionHandle sessionHandle) {
+        public TerminalOutputStream(@Nonnull SessionHandle sessionHandle) {
             this.sessionHandle = sessionHandle;
         }
 

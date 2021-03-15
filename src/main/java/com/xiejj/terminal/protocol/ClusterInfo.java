@@ -72,6 +72,8 @@ public class ClusterInfo {
         }
 
         return clientConfig;
+        // 下面这一行用于本地测试
+//        return ExecConfiger.getExecConfig();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

@@ -34,6 +34,12 @@ public class CacheClientManager implements ClientManager {
         try {
             return this.clientCache.get(clientKey, () -> {
                 Config clientConfig = this.buildAuthConfig(clusterInfo);
+                // TODO 这里构建的客户端的OkHttpClient的连接池默认大小只有5个()
+                //  需要更大并发支持的话可参考io.fabric8.kubernetes.client.utils包里面的
+                //  HttpClientUtils.createHttpClient(io.fabric8.kubernetes.client.Config)方法以及
+                //  okhttp3.OkHttpClient.Builder.connectionPool方法和okhttp3.ConnectionPool手动构造一个
+                //  拥有更多连接的OkHttpClient，然后通过DefaultKubernetesClient(okhttp3.OkHttpClient, Config)
+                //  来创建可以支持更高并发的K8s客户端
                 KubernetesClient client = new DefaultKubernetesClient(clientConfig);
                 return Optional.of(client);
             });

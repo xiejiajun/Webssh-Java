@@ -11,7 +11,6 @@ import io.fabric8.kubernetes.client.Callback;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.utils.BlockingInputStreamPumper;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Response;
 import org.apache.commons.io.IOUtils;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
@@ -202,14 +202,7 @@ public class TerminalService {
             }
 
             ttyWatcher = this.newExecWatch(k8sClient, namespace, podName, container, sessionHandle);
-            final ExecWatch closeableWatcher = ttyWatcher;
             sessionHandle.setTtyWatcher(ttyWatcher);
-            BlockingInputStreamPumper out = new BlockingInputStreamPumper(ttyWatcher.getOutput(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
-            executorService.submit(out);
-            BlockingInputStreamPumper err = new BlockingInputStreamPumper(ttyWatcher.getError(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
-            executorService.submit(err);
-            BlockingInputStreamPumper errChannel = new BlockingInputStreamPumper(ttyWatcher.getErrorChannel(), new TerminalOutputCallback(sessionHandle), closeableWatcher::close);
-            executorService.submit(errChannel);
         } catch (Exception e) {
             log.error("建立连接失败", e);
             this.sendMessage(sessionHandle, "建立连接失败:" + e.getMessage() );
@@ -318,14 +311,17 @@ public class TerminalService {
      * @param podName
      * @param containerName
      * @param sessionHandle
-     * @return
+     * @return ExecWebSocketListener
      */
     private ExecWatch newExecWatch(KubernetesClient client, String namespace, String podName, String containerName, SessionHandle sessionHandle) {
+        OutputStream outputStream = new WebsocketOutputStream(sessionHandle);
+        // writingErrorChannel会输出exit命令之后是否退出成功的消息，这里不需要
+        // ExecWebSocketListener.onMessage里面streamID为3才会往errChannel写数据
+        // [bash 标准输入/输出/错误输出-0/1/2](https://www.jianshu.com/p/cb3c5ad8dcc5): Shell只有0/1/2，这里的3是K8s自定义的？
         return client.pods().inNamespace(namespace).withName(podName).inContainer(containerName)
                 .redirectingInput()
-                .redirectingOutput()
-                .redirectingError()
-                .redirectingErrorChannel()
+                .writingOutput(outputStream)
+                .writingError(outputStream)
                 .withTTY()
                 .usingListener(new SimpleListener(sessionHandle))
                 .exec("/bin/bash");
@@ -356,7 +352,28 @@ public class TerminalService {
         }
     }
 
+    /**
+     * 自定义重写了write(byte[] data)方法的OutputStream直接统一接收K8s Websocket的io.fabric8.kubernetes.client.dsl.internal
+     *  .ExecWebSocketListener.onMessage接收到的响应消息，提高响应速度。
+     *  （redirecting + 监听ExecWebSocketListener.getOutput / getError方式中间有一层转发和异步监听，效率比较低)
+     */
+    private class WebsocketOutputStream extends OutputStream {
+        private SessionHandle sessionHandle;
 
+        public WebsocketOutputStream(SessionHandle sessionHandle) {
+            this.sessionHandle = sessionHandle;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            throw new IOException("not implements");
+        }
+
+        @Override
+        public void write(@Nonnull byte[] buffer) throws IOException {
+            TerminalService.this.sendMessage(this.sessionHandle, buffer);
+        }
+    }
 
     /**
      * 终端会话监听器

@@ -7,7 +7,6 @@ import com.xiejj.terminal.protocol.Message;
 import com.xiejj.terminal.protocol.MessageOperate;
 import com.xiejj.terminal.utils.MapUtils;
 import com.xiejj.terminal.utils.ThreadUtils;
-import io.fabric8.kubernetes.client.Callback;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
@@ -408,26 +407,6 @@ public class TerminalService {
         }
     }
 
-    /**
-     * K8s容器命令返回值回调接口
-     */
-    private class TerminalOutputCallback implements Callback<byte[]> {
-
-        private final SessionHandle sessionHandle;
-
-        public TerminalOutputCallback(SessionHandle sessionHandle) {
-            this.sessionHandle = sessionHandle;
-        }
-
-        @Override
-        public void call(byte[] data) {
-            try {
-                sendMessage(sessionHandle, data);
-            } catch (IOException e) {
-                log.error("WebSocket消息发送失败", e);
-            }
-        }
-    }
 
     interface OperateHandler{
         /**

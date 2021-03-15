@@ -41,8 +41,8 @@
 
     openTerminal({
         operate: 'connect',
-        host: '192.168.142.229',//IP
-        port: '2222',//端口号
+        host: '192.168.141.53',//IP
+        port: '22',//端口号
         username: 'root',//用户名
         password: 'root'//密码
     });
@@ -52,12 +52,12 @@
         var c = parseInt($("#outerDiv").width() / 9) - 2;
         var r = parseInt($("#outerDiv").height() / 17);
         term.resize(c, r);
-        client.send({
-            "operate": "command"
-            , "command": ''
-            , "cols": c
-            , "rows": r
-        });
+        // client.send({
+        //     "operate": "command"
+        //     , "command": ''
+        //     , "cols": c
+        //     , "rows": r
+        // });
     };
 
     //限制最小宽度，避免排版错乱

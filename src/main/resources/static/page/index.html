@@ -89,7 +89,7 @@
                         $("#dragDiv").css("top", mousePointY + 5);
                     }
                 }
-                // resizeTerminal();
+                resizeTerminal();
             });
         },
         mouseLeave: function () {
@@ -101,7 +101,7 @@
         mouseUp: function () {
             $(document).on("mouseup", function () {
                 resizeFlag = false;
-                // resizeTerminal();
+                resizeTerminal();
             });
         }
     };

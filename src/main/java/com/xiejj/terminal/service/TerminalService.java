@@ -202,6 +202,7 @@ public class TerminalService {
 
             ttyWatcher = this.newExecWatch(k8sClient, namespace, podName, container, sessionHandle);
             sessionHandle.setTtyWatcher(ttyWatcher);
+            ttyWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
         } catch (Exception e) {
             log.error("建立连接失败", e);
             this.sendMessage(sessionHandle, "建立连接失败:" + e.getMessage() );

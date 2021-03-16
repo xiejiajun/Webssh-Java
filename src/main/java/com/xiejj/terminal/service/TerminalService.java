@@ -323,7 +323,7 @@ public class TerminalService {
                 .writingOutput(terminalOutput)
                 .writingError(terminalOutput)
                 .withTTY()
-                .usingListener(new SimpleListener(sessionHandle))
+                .usingListener(new TerminalListener(sessionHandle))
                 .exec("/bin/bash");
     }
 
@@ -378,11 +378,11 @@ public class TerminalService {
     /**
      * 终端会话监听器
      */
-    private class SimpleListener implements ExecListener {
-        private SessionHandle sessionHandle;
-        private String sessionId;
+    private class TerminalListener implements ExecListener {
+        private final SessionHandle sessionHandle;
+        private final String sessionId;
 
-        public SimpleListener(SessionHandle sessionHandle) {
+        public TerminalListener(SessionHandle sessionHandle) {
             this.sessionHandle = sessionHandle;
             this.sessionId = sessionHandle.getSessionId();
         }

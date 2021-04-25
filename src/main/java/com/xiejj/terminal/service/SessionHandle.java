@@ -2,11 +2,12 @@ package com.xiejj.terminal.service;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
-import io.fabric8.kubernetes.client.utils.BlockingInputStreamPumper;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.commons.io.IOUtils;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.Closeable;
 
 /**
  * WebSocket Session实体
@@ -14,7 +15,7 @@ import org.springframework.web.socket.WebSocketSession;
  */
 @Data
 @Builder
-public class SessionHandle {
+public class SessionHandle implements Closeable {
 
     private String sessionId;
 
@@ -24,10 +25,9 @@ public class SessionHandle {
 
     private ExecWatch ttyWatcher;
 
+    @Override
     public void close() {
-        if (ttyWatcher != null) {
-            ttyWatcher.close();
-        }
+        IOUtils.closeQuietly(ttyWatcher);
         IOUtils.closeQuietly(webSocketSession);
     }
 }

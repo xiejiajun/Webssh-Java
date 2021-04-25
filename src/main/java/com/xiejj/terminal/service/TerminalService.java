@@ -274,7 +274,6 @@ public class TerminalService {
         String sessionId = sessionHandle.getSessionId();
         sessionHandle.close();
         this.sessionHandleMap.remove(sessionId);
-        IOUtils.closeQuietly(sessionHandle.getWebSocketSession());
     }
 
     /**
@@ -283,12 +282,8 @@ public class TerminalService {
      */
     public void close(WebSocketSession session) {
         String sessionId = session.getId();
-        SessionHandle sessionHandle = sessionHandleMap.get(sessionId);
-        if (sessionHandle != null) {
-            sessionHandle.close();
-        }
+        IOUtils.closeQuietly(sessionHandleMap.get(sessionId));
         this.sessionHandleMap.remove(sessionId);
-        IOUtils.closeQuietly(session);
     }
 
     /**
@@ -345,9 +340,7 @@ public class TerminalService {
         Iterator<Map.Entry<String, SessionHandle>> iterator = this.sessionHandleMap.entrySet().iterator();
         while (iterator.hasNext()) {
             SessionHandle sessionHandle = iterator.next().getValue();
-            if (sessionHandle != null) {
-                sessionHandle.close();
-            }
+            IOUtils.closeQuietly(sessionHandle);
             iterator.remove();
         }
     }

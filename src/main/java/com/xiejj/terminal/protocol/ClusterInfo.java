@@ -32,7 +32,7 @@ public class ClusterInfo {
      */
     private String name;
     /**
-     * 集群 CA 根证书
+     * 集群 CA 根证书(必须是Base64编码的数据)
      */
     private String caData;
     /**
@@ -53,27 +53,27 @@ public class ClusterInfo {
 
 
     public Config buildExecConfig() throws IOException, InterruptedException {
-        String caData = "-----BEGIN CERTIFICATE-----\n" +
-                "-----END CERTIFICATE-----";
-        String masterUrl = "https://aws.eks.xxx";
-        Config clientConfig = Config.empty();
-        clientConfig.setMasterUrl(masterUrl);
-        clientConfig.setCaCertData(caData);
-
-        ExecConfig execConfig = new ExecConfig();
-        execConfig.setCommand("aws");
-        execConfig.setArgs(Lists.newArrayList("--region", "us-west-1", "eks", "get-token", "--cluster-name", "my-eks-cluster"));
-        execConfig.setApiVersion("client.authentication.k8s.io/v1alpha1");
-        ClusterInfo.ExecCredential ec = getExecCredentialFromExecConfig(execConfig, null);
-        if (ec != null && ec.status != null && ec.status.token != null) {
-            clientConfig.setOauthToken(ec.status.token);
-        } else {
-            log.warn("No token returned");
-        }
-
-        return clientConfig;
+//        String caData = "-----BEGIN CERTIFICATE-----\n" +
+//                "-----END CERTIFICATE-----";
+//        String masterUrl = "https://aws.eks.xxx";
+//        Config clientConfig = Config.empty();
+//        clientConfig.setMasterUrl(masterUrl);
+//        clientConfig.setCaCertData(caData);
+//
+//        ExecConfig execConfig = new ExecConfig();
+//        execConfig.setCommand("aws");
+//        execConfig.setArgs(Lists.newArrayList("--region", "us-west-1", "eks", "get-token", "--cluster-name", "my-eks-cluster"));
+//        execConfig.setApiVersion("client.authentication.k8s.io/v1alpha1");
+//        ClusterInfo.ExecCredential ec = getExecCredentialFromExecConfig(execConfig, null);
+//        if (ec != null && ec.status != null && ec.status.token != null) {
+//            clientConfig.setOauthToken(ec.status.token);
+//        } else {
+//            log.warn("No token returned");
+//        }
+//
+//        return clientConfig;
         // 下面这一行用于本地测试
-//        return ExecConfiger.getExecConfig();
+        return ExecConfiger.getExecConfig();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

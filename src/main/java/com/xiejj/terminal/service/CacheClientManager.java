@@ -73,6 +73,9 @@ public class CacheClientManager implements ClientManager {
         config.setTrustCerts(true);
         if (StringUtils.isNotBlank(clusterInfo.getCaData())) {
             config.setTrustCerts(false);
+            // TODO 需要特别注意：fabric8拿到CA数据后会自动调用CertUtils.getInputStreamFromDataOrFile进行一次Base64解码
+            //  所以clientConfig.setCaCertData传入的字符串必须是Base64编码的CA证书数据
+            //  官方的Java/Go SDK都不会对CA证书数据进行自动Base64解码，这一点fabric8和官方库不一样，要特别注意
             config.setCaCertData(clusterInfo.getCaData());
         }
         return config;

@@ -76,15 +76,14 @@ public class TerminalService {
      * @param sessionHandle
      */
     private void handleConnect(Message message, SessionHandle sessionHandle) {
-        executorService.execute(() -> {
-            try {
-                this.establishK8sConnection(sessionHandle, message);
-            } catch (Exception e) {
-                log.error("k8s集群连接失败", e);
-                this.sendMessage(sessionHandle, "Error: " + e.getMessage());
-                this.close(sessionHandle);
-            }
-        });
+        try {
+            this.establishK8sConnection(sessionHandle, message);
+            log.debug("{} establish k8s connection success", sessionHandle.getSessionId());
+        } catch (Exception e) {
+            log.error("建立K8s集群连接失败", e);
+            this.sendMessage(sessionHandle, "建立K8s集群连接失败:" + e.getMessage() );
+            this.close(sessionHandle);
+        }
     }
 
     /**
@@ -100,6 +99,7 @@ public class TerminalService {
                 return;
             }
             this.sendCommand(execWatcher, command);
+            log.debug("{} exec command success", sessionHandle.getSessionId());
         } catch (Exception e) {
             log.error("命令执行失败", e);
             sendMessage(sessionHandle, "命令执行失败：" + e.getMessage());
@@ -166,7 +166,8 @@ public class TerminalService {
                 this.sendMessage(session, "不支持的操作：" + operateType);
                 return;
             }
-            handler.handle(message, sessionHandle);
+            // 并发处理命令
+            executorService.execute(() -> handler.handle(message, sessionHandle));
         } catch (Exception e) {
             log.error("执行执行异常:{}", e.getMessage());
             this.sendMessage(session, "指令执行异常:" + e.getMessage());
@@ -178,36 +179,28 @@ public class TerminalService {
      * @param sessionHandle
      * @param commandInfo
      */
-    private void establishK8sConnection(SessionHandle sessionHandle, Message commandInfo) {
+    private void establishK8sConnection(SessionHandle sessionHandle, Message commandInfo) throws Exception {
         String clusterName = commandInfo.getK8sClusterName();
         if (StringUtils.isBlank(clusterName)) {
             this.sendMessage(sessionHandle, "K8s集群名称未指定");
             this.close(sessionHandle);
             return;
         }
-        KubernetesClient k8sClient;
-        ExecWatch ttyWatcher;
-        try {
-            k8sClient = this.clientManager.getOrCreateK8sClient(clusterName);
-            sessionHandle.setK8sClient(k8sClient);
-            String namespace = commandInfo.getNamespace();
-            String podName = commandInfo.getPodName();
-            String container = commandInfo.getContainer();
-            if (StringUtils.isBlank(namespace)) {
-                namespace = ConstantPool.DEFAULT_K8S_NAMESPACE;
-            }
-            if (StringUtils.isBlank(podName)) {
-                throw new RuntimeException("容器信息未指定");
-            }
-
-            ttyWatcher = this.newExecWatch(k8sClient, namespace, podName, container, sessionHandle);
-            sessionHandle.setTtyWatcher(ttyWatcher);
-            ttyWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
-        } catch (Exception e) {
-            log.error("建立连接失败", e);
-            this.sendMessage(sessionHandle, "建立连接失败:" + e.getMessage() );
-            this.close(sessionHandle);
+        KubernetesClient k8sClient = this.clientManager.getOrCreateK8sClient(clusterName);
+        sessionHandle.setK8sClient(k8sClient);
+        String namespace = commandInfo.getNamespace();
+        String podName = commandInfo.getPodName();
+        String container = commandInfo.getContainer();
+        if (StringUtils.isBlank(namespace)) {
+            namespace = ConstantPool.DEFAULT_K8S_NAMESPACE;
         }
+        if (StringUtils.isBlank(podName)) {
+            throw new RuntimeException("容器信息未指定");
+        }
+
+        ExecWatch ttyWatcher = this.newExecWatch(k8sClient, namespace, podName, container, sessionHandle);
+        sessionHandle.setTtyWatcher(ttyWatcher);
+        ttyWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
 
     }
 

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -81,7 +82,9 @@ public class TerminalService {
             log.debug("{} establish k8s connection success", sessionHandle.getSessionId());
         } catch (Exception e) {
             log.error("建立K8s集群连接失败", e);
-            this.sendMessage(sessionHandle, "建立K8s集群连接失败:" + e.getMessage() );
+            Throwable cause = e.getCause();
+            String msg = Objects.isNull(cause) ? e.getMessage() : cause.getMessage();
+            this.sendMessage(sessionHandle, "建立K8s集群连接失败:" + msg);
             this.close(sessionHandle);
         }
     }

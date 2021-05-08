@@ -170,7 +170,13 @@ public class TerminalService {
                 return;
             }
             // 并发处理命令
-            executorService.execute(() -> handler.handle(message, sessionHandle));
+            executorService.execute(() -> {
+                try {
+                    handler.handle(message, sessionHandle);
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
+            });
         } catch (Exception e) {
             log.error("执行执行异常:{}", e.getMessage());
             this.sendMessage(session, "指令执行异常:" + e.getMessage());

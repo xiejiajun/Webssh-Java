@@ -25,6 +25,13 @@ public class SessionHandle implements Closeable {
 
     private ExecWatch ttyWatcher;
 
+    /**
+     * 重置终端,支持在同一个websocket会话中切换容器时自动清理前面的连接
+     */
+    public void resetTerminal() {
+        IOUtils.closeQuietly(this.ttyWatcher);
+    }
+
     @Override
     public void close() {
         IOUtils.closeQuietly(ttyWatcher);

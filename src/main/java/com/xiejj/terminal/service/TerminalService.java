@@ -207,9 +207,9 @@ public class TerminalService {
             throw new RuntimeException("容器信息未指定");
         }
 
-        sessionHandle.resetTerminal();
-        ExecWatch ttyWatcher = this.newExecWatch(k8sClient, namespace, podName, container, sessionHandle);
-        sessionHandle.setTtyWatcher(ttyWatcher);
+        final String finalNamespace = namespace;
+        ExecWatch ttyWatcher = sessionHandle.switchTtyWatcher(commandInfo.ttyKey(),
+                () -> this.newExecWatch(k8sClient, finalNamespace, podName, container, sessionHandle));
         ttyWatcher.resize(commandInfo.getCols(), commandInfo.getRows());
 
     }

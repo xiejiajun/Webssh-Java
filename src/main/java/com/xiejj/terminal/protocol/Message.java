@@ -16,4 +16,8 @@ public class Message {
     private String namespace;
     private String podName;
     private String container;
+
+    public String ttyKey() {
+        return String.format("%s_%s_%s", namespace, podName, container);
+    }
 }

@@ -1,13 +1,16 @@
 package com.xiejj.terminal.service;
 
+import com.google.common.collect.Maps;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import lombok.Builder;
 import lombok.Data;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.Closeable;
+import java.util.Map;
 
 /**
  * WebSocket Session实体
@@ -23,19 +26,63 @@ public class SessionHandle implements Closeable {
 
     private KubernetesClient k8sClient;
 
-    private ExecWatch ttyWatcher;
+    private ExecWatch curTtyWatcher;
 
-    /**
-     * 重置终端,支持在同一个websocket会话中切换容器时自动清理前面的连接
-     */
-    public void resetTerminal() {
-        IOUtils.closeQuietly(this.ttyWatcher);
-        this.ttyWatcher = null;
+    private final Map<String, ExecWatch> podTtyWatchers;
+
+    public SessionHandle() {
+        this.podTtyWatchers = Maps.newConcurrentMap();
+    }
+
+    public ExecWatch getTtyWatcher() {
+        return this.curTtyWatcher;
+    }
+
+    public ExecWatch switchTtyWatcher(String ttyKey, ExecWatchCreator creator) {
+        if (StringUtils.isBlank(ttyKey)) {
+            return this.curTtyWatcher;
+        }
+        if (creator == null) {
+            return this.curTtyWatcher;
+        }
+        ExecWatch ttyWatcher = this.podTtyWatchers.get(ttyKey);
+        if (ttyWatcher != null) {
+            this.curTtyWatcher = ttyWatcher;
+            return this.curTtyWatcher;
+        }
+        ExecWatch newTtyWatcher = creator.create();
+        if (newTtyWatcher != null) {
+            this.curTtyWatcher = newTtyWatcher;
+            this.podTtyWatchers.put(ttyKey, newTtyWatcher);
+        }
+        return this.curTtyWatcher;
+    }
+
+
+    private void clearTtys() {
+        if (podTtyWatchers.size() <= 0) {
+            return;
+        }
+        for (Map.Entry<String, ExecWatch> entry : podTtyWatchers.entrySet()) {
+            try {
+                IOUtils.closeQuietly(entry.getValue());
+            } catch (Exception ignore) {
+            }
+        }
     }
 
     @Override
     public void close() {
-        IOUtils.closeQuietly(ttyWatcher);
+        this.clearTtys();
         IOUtils.closeQuietly(webSocketSession);
+    }
+
+
+    public interface ExecWatchCreator {
+        /**
+         * 创建ExecWatch实例
+         * @return
+         */
+        ExecWatch create();
     }
 }

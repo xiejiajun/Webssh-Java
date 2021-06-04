@@ -30,6 +30,7 @@ public class SessionHandle implements Closeable {
      */
     public void resetTerminal() {
         IOUtils.closeQuietly(this.ttyWatcher);
+        this.ttyWatcher = null;
     }
 
     @Override

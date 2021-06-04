@@ -28,11 +28,7 @@ public class SessionHandle implements Closeable {
 
     private ExecWatch curTtyWatcher;
 
-    private final Map<String, ExecWatch> podTtyWatchers;
-
-    public SessionHandle() {
-        this.podTtyWatchers = Maps.newConcurrentMap();
-    }
+    private final Map<String, ExecWatch> podTtyWatchers = Maps.newConcurrentMap();
 
     public ExecWatch getTtyWatcher() {
         return this.curTtyWatcher;

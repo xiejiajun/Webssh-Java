@@ -63,11 +63,11 @@ public class TerminalService {
      * @param session
      */
     public void bindSessionHandle(WebSocketSession session) {
+        String socketSessionId = session.getId();
         SessionHandle sessionHandle = SessionHandle.builder()
                 .webSocketSession(session)
+                .sessionId(socketSessionId)
                 .build();
-        String socketSessionId = session.getId();
-        sessionHandle.setSessionId(socketSessionId);
         sessionHandleMap.put(socketSessionId, sessionHandle);
     }
 

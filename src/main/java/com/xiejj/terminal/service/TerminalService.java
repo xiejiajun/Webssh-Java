@@ -63,8 +63,18 @@ public class TerminalService {
         handlerMap = Maps.newHashMap();
         handlerMap.put(MessageOperate.ESTABLISH_CONNECT, this::handleConnect);
         handlerMap.put(MessageOperate.COMMAND, this::handleCommand);
-        handlerMap.put(MessageOperate.HEARTBEAT, this::handleHeartBeat);
         handlerMap.put(MessageOperate.RESIZE_WINDOW, this::handleResizeWindow);
+        handlerMap.put(MessageOperate.HEARTBEAT, new OperateHandler() {
+            @Override
+            public void handle(Message message, SessionHandle sessionHandle) {
+                TerminalService.this.handleHeartBeat(message, sessionHandle);
+            }
+
+            @Override
+            public void postHandle(Message message, SessionHandle sessionHandle) {
+
+            }
+        });
     }
 
     /**
@@ -189,7 +199,7 @@ public class TerminalService {
                 try {
                     handler.handle(message, sessionHandle);
                     // 刷新访问时间
-                    operateType.postHandle(sessionHandle);
+                    handler.postHandle(message, sessionHandle);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                 }
@@ -429,6 +439,14 @@ public class TerminalService {
          * @param sessionHandle
          */
         void handle(Message message, SessionHandle sessionHandle);
+
+        /**
+         * 命令执行后续操作
+         * @param sessionHandle
+         */
+        default void postHandle(Message message, SessionHandle sessionHandle) {
+            sessionHandle.refreshLastAccessTime();
+        }
     }
 
 }

@@ -5,3 +5,6 @@ spring:
     view:
       prefix: /page/
       suffix: .html
+
+terminal:
+  session-timeout: 1

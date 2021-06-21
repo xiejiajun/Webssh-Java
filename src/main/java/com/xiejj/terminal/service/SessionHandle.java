@@ -28,6 +28,16 @@ public class SessionHandle implements Closeable {
 
     private ExecWatch curTtyWatcher;
 
+    /**
+     * 最后一次访问时间
+     */
+    private long lastAccessTime;
+
+    /**
+     * 会话超时时间
+     */
+    private long sessionTimeoutMillis;
+
     private final Map<String, ExecWatch> podTtyWatchers = Maps.newConcurrentMap();
 
     public ExecWatch getTtyWatcher() {
@@ -54,6 +64,17 @@ public class SessionHandle implements Closeable {
         return this.curTtyWatcher;
     }
 
+
+    public void refreshLastAccessTime() {
+        this.lastAccessTime = System.currentTimeMillis();
+    }
+
+    public boolean isExpireSession() {
+        if (this.sessionTimeoutMillis <= 0) {
+            return false;
+        }
+        return System.currentTimeMillis() - this.lastAccessTime > this.sessionTimeoutMillis;
+    }
 
     private void clearTtys() {
         if (podTtyWatchers.size() <= 0) {

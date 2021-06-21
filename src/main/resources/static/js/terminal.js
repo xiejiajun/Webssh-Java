@@ -28,7 +28,7 @@ WSSHClient.prototype.connect = function (options) {
     this._connection.onopen = function () {
         options.onConnect();
         //开始连接，启动心跳检查
-        // heartCheck.start();
+        heartCheck.start();
     };
 
     this._connection.onmessage = function (evt) {
@@ -41,7 +41,7 @@ WSSHClient.prototype.connect = function (options) {
             reconnectTimes = 0;
         }
         //收到消息，重置心跳检查
-        // heartCheck.start();
+        heartCheck.start();
     };
 
 
@@ -87,7 +87,7 @@ var heartCheck = {
         var _this = this;
 
         this.checkTimeoutObj = setTimeout(function () {
-            client.send({operate: "heartbeat"});
+            client.send({operate: "HEARTBEAT"});
             _this.closeTimeoutObj = setTimeout(function () {
                 console.log("无心跳，关闭连接");
                 client.close();

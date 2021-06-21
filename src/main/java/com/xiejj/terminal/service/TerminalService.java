@@ -16,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -29,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author xiejiajun
@@ -47,9 +49,16 @@ public class TerminalService {
     @Qualifier("cacheClientManager")
     private ClientManager clientManager;
 
+
+    @Value("${terminal.session-timeout:30}")
+    private long terminalTimeoutMinutes;
+
+    private long terminalTimeoutMillis;
+
     @PostConstruct
     public void initialize() {
         sessionHandleMap = Maps.newConcurrentMap();
+        terminalTimeoutMillis = TimeUnit.MINUTES.toMillis(terminalTimeoutMinutes);
         executorService = ThreadUtils.newFixedThreadPool(100, "terminal-stream-thread");
         handlerMap = Maps.newHashMap();
         handlerMap.put(MessageOperate.ESTABLISH_CONNECT, this::handleConnect);
@@ -67,6 +76,7 @@ public class TerminalService {
         SessionHandle sessionHandle = SessionHandle.builder()
                 .webSocketSession(session)
                 .sessionId(socketSessionId)
+                .sessionTimeoutMillis(this.terminalTimeoutMillis)
                 .build();
         sessionHandleMap.put(socketSessionId, sessionHandle);
     }
@@ -118,7 +128,12 @@ public class TerminalService {
      */
     private void handleHeartBeat(Message message, SessionHandle sessionHandle) {
         try {
-            this.sendCommand(sessionHandle.getTtyWatcher(), " ");
+            if (sessionHandle.isExpireSession()) {
+                sendMessage(sessionHandle, "session timeout");
+                this.close(sessionHandle);
+                return;
+            }
+            this.sendCommand(sessionHandle.getTtyWatcher(), "");
             sendMessage(sessionHandle, "Heartbeat healthy");
         } catch (IOException e) {
             log.error("心跳检查失败", e);
@@ -173,6 +188,8 @@ public class TerminalService {
             executorService.execute(() -> {
                 try {
                     handler.handle(message, sessionHandle);
+                    // 刷新访问时间
+                    operateType.postHandle(sessionHandle);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                 }
